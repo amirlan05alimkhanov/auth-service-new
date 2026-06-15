@@ -1,0 +1,15 @@
+# Веб-фреймворк и сервер
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+
+# Работа с базой данных (ORM и асинхронный драйвер PostgreSQL)
+sqlalchemy>=2.0.25
+asyncpg>=0.29.0
+
+# Валидация данных и настройки
+pydantic[email]>=2.5.3
+pydantic-settings>=2.1.0
+
+# Безопасность, хэширование и JWT токены
+passlib[bcrypt]>=1.7.4
+python-jose[cryptography]>=3.3.0
