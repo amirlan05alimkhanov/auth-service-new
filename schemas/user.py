@@ -14,7 +14,7 @@ class ContractorRegisterRequest(BaseModel):
     is_self_employed: bool
 
 class UserLoginRequest(BaseModel):
-    full_name: str
+    username: str
     email: EmailStr
     password: str
 

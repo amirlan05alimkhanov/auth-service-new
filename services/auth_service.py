@@ -44,11 +44,10 @@ class AuthService:
         normalized_email = data.email.lower()
         user = await self.user_repo.get_user_by_email(normalized_email)
 
-        # Склеиваем имя и фамилию из БД, защищаясь от пустых значений (None)
-        db_full_name = f"{user.first_name or ''} {user.last_name or ''}".strip()
+        # Проверяем: существует ли юзер, совпадает ли username и верен ли пароль
+        if not user or user.username != data.username or not verify_password(data.password, user.password_hash):
+            raise HTTPException(status_code=401, detail="Invalid email, username, or password")
 
-        if not user or db_full_name != data.full_name or not verify_password(data.password, user.password_hash):
-            raise HTTPException(status_code=401, detail="Invalid email, full name, or password")
         # Обновляем время последнего входа
         user.last_login = datetime.now(timezone.utc)
         await self.user_repo.update_user(user)
