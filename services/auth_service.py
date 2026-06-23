@@ -6,7 +6,7 @@ from schemas.user import CompanyRegisterRequest, ContractorRegisterRequest, User
 from models.user import User, Company
 from core.security import hash_password, verify_password, create_tokens
 from models.user import VerificationCode
-from schemas.user import EmailVerificationRequest
+from schemas.user import EmailVerificationRequest, ForgotPasswordRequest, ResetPasswordRequest
 
 
 class AuthService:
@@ -123,6 +123,56 @@ class AuthService:
         await self.user_repo.delete_verification_code(v_code)
 
         return {"status": "success", "message": "Email успешно подтвержден"}
+
+    async def forgot_password(self, data: ForgotPasswordRequest) -> dict:
+        normalized_email = data.email.lower()
+        user = await self.user_repo.get_user_by_email(normalized_email)
+
+        # Безопасность: если пользователя нет, лучше вернуть успех,
+        # чтобы злоумышленники не могли сканировать базу на наличие email.
+        if not user:
+            return {"status": "success", "message": "Если email существует, код восстановления отправлен"}
+
+        # Генерируем код сброса
+        code = generate_random_code()
+        expires_at = datetime.now() + timedelta(minutes=5)
+
+        v_code = VerificationCode(email=normalized_email, code=code, expires_at=expires_at)
+        await self.user_repo.save_verification_code(v_code)
+
+        # "Отправляем" письмо со специфичным текстом
+        print("\n" + "*" * 50)
+        print(f"ЗАПРОС НА СБРОС ПАРОЛЯ ДЛЯ {normalized_email}")
+        print(f"КОД ВОССТАНОВЛЕНИЯ: {code}")
+        print("*" * 50 + "\n")
+
+        return {"status": "success", "message": "Код восстановления отправлен на почту"}
+
+    async def reset_password(self, data: ResetPasswordRequest) -> dict:
+        normalized_email = data.email.lower()
+
+        # Проверяем код в базе
+        v_code = await self.user_repo.get_verification_code(normalized_email, data.code)
+        if not v_code:
+            raise HTTPException(status_code=400, detail="Неверный код восстановления")
+
+        if datetime.now() > v_code.expires_at:
+            await self.user_repo.delete_verification_code(v_code)
+            raise HTTPException(status_code=400, detail="Срок действия кода истек")
+
+        # Находим пользователя
+        user = await self.user_repo.get_user_by_email(normalized_email)
+        if not user:
+            raise HTTPException(status_code=404, detail="Пользователь не найден")
+
+        # Хешируем новый пароль и обновляем его в модели
+        user.password_hash = hash_password(data.new_password)
+        await self.user_repo.update_user(user)
+
+        # Удаляем использованный код
+        await self.user_repo.delete_verification_code(v_code)
+
+        return {"status": "success", "message": "Пароль успешно изменен"}
 
 
 def generate_random_code() -> str:

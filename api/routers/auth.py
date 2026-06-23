@@ -6,7 +6,7 @@ from schemas.user import (
 from services.auth_service import AuthService
 from api.dependencies import get_auth_service, get_current_user
 from models.user import User
-from schemas.user import EmailVerificationRequest
+from schemas.user import EmailVerificationRequest, ForgotPasswordRequest, ResetPasswordRequest
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
@@ -40,3 +40,11 @@ async def get_me(current_user: User = Depends(get_current_user)):
 @router.post("/verify-email")
 async def verify_email(data: EmailVerificationRequest, auth_service: AuthService = Depends()):
     return await auth_service.verify_email(data)
+
+@router.post("/forgot-password")
+async def forgot_password(data: ForgotPasswordRequest, auth_service: AuthService = Depends()):
+    return await auth_service.forgot_password(data)
+
+@router.post("/reset-password")
+async def reset_password(data: ResetPasswordRequest, auth_service: AuthService = Depends()):
+    return await auth_service.reset_password(data)
