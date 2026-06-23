@@ -1,10 +1,13 @@
+from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from models.user import User, Company
+from models.user import VerificationCode
+from database.connection import get_db
 
 
 class UserRepository:
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession = Depends(get_db)):
         self.session = session
 
     async def get_user_by_username(self, username: str) -> User | None:
@@ -37,4 +40,21 @@ class UserRepository:
         await self.session.commit()
 
     async def update_user(self, user: User) -> None:
+        await self.session.commit()
+
+    async def save_verification_code(self, verification_code: VerificationCode) -> None:
+        self.session.add(verification_code)
+        await self.session.commit()
+
+    async def get_verification_code(self, email: str, code: str) -> VerificationCode | None:
+        result = await self.session.execute(
+            select(VerificationCode).where(
+                VerificationCode.email == email,
+                VerificationCode.code == code
+            )
+        )
+        return result.scalar_one_or_none()
+
+    async def delete_verification_code(self, verification_code: VerificationCode) -> None:
+        await self.session.delete(verification_code)
         await self.session.commit()

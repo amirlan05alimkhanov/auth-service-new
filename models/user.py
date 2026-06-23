@@ -1,5 +1,6 @@
 from datetime import datetime
 from sqlalchemy import ForeignKey, DateTime, func
+from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from database.connection import Base
 
@@ -9,8 +10,8 @@ class Company(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[str] = mapped_column(nullable=False)
-    bin: Mapped[str] = mapped_column(unique=True, index=True, nullable=False)
-    requisites: Mapped[str | None] = mapped_column()
+    bin: Mapped[str] = mapped_column(String(12), unique=True, index=True, nullable=False)
+    requisites: Mapped[str | None] = mapped_column(nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     users: Mapped[list["User"]] = relationship(back_populates="company")
@@ -21,7 +22,7 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     username: Mapped[str] = mapped_column(unique=True, index=True, nullable=False)
-    email: Mapped[str] = mapped_column(unique=True, index=True, nullable=False)
+    email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(nullable=False)
 
     first_name: Mapped[str | None] = mapped_column()
@@ -39,3 +40,12 @@ class User(Base):
 
     company_id: Mapped[int | None] = mapped_column(ForeignKey("companies.id"))
     company: Mapped["Company"] = relationship(back_populates="users")
+
+
+class VerificationCode(Base):
+    __tablename__ = "verification_codes"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    email: Mapped[str] = mapped_column(String, index=True, nullable=False)
+    code: Mapped[str] = mapped_column(String(6), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)

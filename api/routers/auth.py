@@ -6,6 +6,7 @@ from schemas.user import (
 from services.auth_service import AuthService
 from api.dependencies import get_auth_service, get_current_user
 from models.user import User
+from schemas.user import EmailVerificationRequest
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
@@ -35,3 +36,7 @@ async def login_user(
 @router.get("/me/", response_model=UserResponse)
 async def get_me(current_user: User = Depends(get_current_user)):
     return current_user
+
+@router.post("/verify-email")
+async def verify_email(data: EmailVerificationRequest, auth_service: AuthService = Depends()):
+    return await auth_service.verify_email(data)

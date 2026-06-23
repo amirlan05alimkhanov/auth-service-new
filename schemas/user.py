@@ -3,6 +3,8 @@ from pydantic import BaseModel, EmailStr, Field
 class CompanyRegisterRequest(BaseModel):
     company_name: str
     bin: str
+    bin: str = Field(..., min_length=12, max_length=12, pattern=r"^\d{12}$")
+    requisites: str
     username: str
     email: EmailStr
     password: str
@@ -14,7 +16,6 @@ class ContractorRegisterRequest(BaseModel):
     is_self_employed: bool
 
 class UserLoginRequest(BaseModel):
-    username: str
     email: EmailStr
     password: str
 
@@ -27,8 +28,11 @@ class UserResponse(BaseModel):
     username: str
     email: str
     role: str
-    # В БД поле называется company_id, а в JSON ответе должно быть company
     company: int | None = Field(default=None, validation_alias="company_id", serialization_alias="company")
     is_self_employed: bool
-
     model_config = {"from_attributes": True}
+
+
+class EmailVerificationRequest(BaseModel):
+    email: EmailStr
+    code: str = Field(..., min_length=6, max_length=6, pattern=r"^\d{6}$")
